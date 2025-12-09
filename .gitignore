@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS deployment artifacts
+deploy/lamdba_package/
+deploy/*.zip
+*.zip
+
+# Data files
+*.parquet
+*.csv
+*.json
+*.snappy
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+
+*.csv
+*.parquet
+*.ipynb
+.env
