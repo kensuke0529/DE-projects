@@ -30,8 +30,30 @@ STATUS_ROOT = "raw/status/"
 
 
 def list_files(prefix):
-    resp = s3.list_objects_v2(Bucket=BUCKET, Prefix=prefix)
-    return [o["Key"] for o in resp.get("Contents", []) if o["Key"].endswith(".json")]
+    """List all files with pagination to avoid excessive API calls"""
+    files = []
+    continuation_token = None
+    
+    while True:
+        params = {"Bucket": BUCKET, "Prefix": prefix}
+        if continuation_token:
+            params["ContinuationToken"] = continuation_token
+        
+        resp = s3.list_objects_v2(**params)
+        
+        # Collect files from this page
+        if "Contents" in resp:
+            files.extend([o["Key"] for o in resp["Contents"] if o["Key"].endswith(".json")])
+        
+        # Check if there are more pages
+        if not resp.get("IsTruncated", False):
+            break
+        
+        continuation_token = resp.get("NextContinuationToken")
+        if not continuation_token:
+            break
+    
+    return files
 
 
 # -------- Find all files to process -------- #
