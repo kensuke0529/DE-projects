@@ -3,6 +3,12 @@
 ## Overview
 This project implements a production-style Databricks Lakehouse pipeline to analyze NYC taxi demand and revenue patterns with daily weather data. The pipeline ingests public datasets, applies data quality validation, and produces KPI marts consumed by dashboards.
 
+## What this project demonstrates
+- **Lakehouse design:** Bronze → Silver → Gold (raw → standardized/DQ → marts)
+- **Orchestration:** end-to-end ETL automated via a **Databricks Job**
+- **Data Quality:** validation rules + **quarantine table** and DQ monitoring
+- **Analytics delivery:** city/zone daily KPI marts + weather metrics
+
 ## Workflow
 The pipeline follows a Bronze → Silver → Gold design pattern:
 
@@ -18,6 +24,53 @@ The pipeline follows a Bronze → Silver → Gold design pattern:
 
 ![ETL Pipeline](./images/pipeline.png)
 *The diagram above illustrates the ETL pipeline orchestrated by a Databricks job, which automates data ingestion, transformation, and loading throughout the Lakehouse workflow.*
+
+
+## ETL pipeline
+
+
+### Extract (Bronze)
+**Sources**
+- NYC TLC Yellow Taxi trip data
+- NOAA daily weather data
+
+**Ingestion**
+- Land raw data into **Bronze Delta tables**
+- Partition by year/month for scalable reads and incremental refreshes
+
+**Outputs (example tables)**
+- bronze.taxi_trips_raw
+- bronze.weather_daily_raw
+
+---
+
+### Transform + Validate (Silver)
+**Standardization**
+- Cast timestamps and numeric fields, normalize column names/types
+- Derive fields used downstream 
+- (Optional) deduplicate records if repeated loads occur
+
+**Data Quality + Quarantine**
+- Apply validation rules (timestamps, duration/distance bounds, non-negative monetary values, partition consistency)
+- Route failed records to a **quarantine Delta table** with a failure_reason for monitoring and debugging
+
+**Outputs (example tables)**
+- silver.taxi_trips_clean
+- silver.weather_clean
+- silver.quarantine_trips
+
+---
+
+### Load (Gold)
+**KPI marts**
+- Build analytics-ready aggregates designed for dashboard queries
+
+**Outputs (example marts)**
+- gold.kpi_city_daily
+- gold.kpi_zone_daily
+- gold.kpi_weather_impact_daily
+- gold.dq_metrics_daily
+
 
 ## Data Quality
 The Silver layer enforces multiple validation rules, including:
