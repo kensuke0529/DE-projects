@@ -1,0 +1,5 @@
+# This is a placeholder file for seed data
+# Add your CSV files here for reference data
+
+# Seeds are CSV files that dbt can load into your data warehouse
+# Use them for small lookup tables or reference data

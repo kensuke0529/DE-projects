@@ -1,0 +1,85 @@
+version: 2
+
+models:
+  - name: dim_views
+    description: Page views by day
+    columns:
+      - name: event_date
+        description: Date of the event
+        tests:
+          - unique
+          - not_null
+      - name: total_page_views
+        description: Total number of page views
+        tests:
+          - not_null
+      - name: unique_users
+        description: Number of unique users
+        tests:
+          - not_null
+
+  - name: fct_purchases
+    description: Transaction-level fact table with purchase details
+    columns:
+      - name: transaction_id
+        description: Unique transaction identifier
+        tests:
+          - unique
+          - not_null
+      - name: user_pseudo_id
+        description: User identifier
+        tests:
+          - not_null
+      - name: purchase_ts
+        description: Purchase timestamp
+        tests:
+          - not_null
+      - name: total_revenue
+        description: Total transaction revenue
+        tests:
+          - not_null
+
+  - name: dim_products
+    description: Product dimension table with unique products
+    columns:
+      - name: product_key
+        description: Unique product identifier
+        tests:
+          - unique
+          - not_null
+      - name: item_name
+        description: Product name
+
+  - name: agg_daily_product_revenue
+    description: Daily product performance metrics
+    columns:
+      - name: event_date
+        description: Date of the event
+        tests:
+          - not_null
+      - name: product_key
+        description: Product identifier
+        tests:
+          - not_null
+      - name: total_revenue
+        description: Total revenue for the product on this day
+
+  - name: agg_daily_funnel_long
+    description: Long-format funnel metrics for visualization
+    columns:
+      - name: session_date
+        description: Date of the session
+        tests:
+          - not_null
+      - name: stage_order
+        description: The numeric order of the funnel stage
+        tests:
+          - not_null
+      - name: stage
+        description: The name of the funnel stage
+        tests:
+          - not_null
+      - name: sessions
+        description: Number of sessions at this stage
+        tests:
+          - not_null

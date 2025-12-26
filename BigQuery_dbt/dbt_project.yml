@@ -1,0 +1,44 @@
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'bigquery_dbt_project'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'bigquery_dbt_project'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+models:
+  bigquery_dbt_project:
+    # Config indicated by + and applies to all files under models/staging/
+    staging:
+      +materialized: view
+      +schema: staging
+    
+    # Config for models in the marts folder
+    marts:
+      +materialized: table
+      +schema: marts
+
+# Date range for GA4 public dataset (Nov 1, 2020 - Jan 31, 2021)
+vars:
+  ga4_start_suffix: '20201101'  # First available date
+  ga4_end_suffix: '20210131'    # Last available date

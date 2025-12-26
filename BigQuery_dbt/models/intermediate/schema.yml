@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: int_purchase_items
+    description: Purchase items with transaction, product, and revenue details
+    columns:
+      - name: transaction_id
+        tests:
+          - unique
+          - not_null
+      - name: purchase_ts
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+      - name: currency
+        tests:
+          - not_null
+

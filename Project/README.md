@@ -35,7 +35,10 @@ The pipeline follows a Bronze → Silver → Gold design pattern:
 - NOAA daily weather data
 
 **Ingestion**
-- Land raw data into **Bronze Delta tables**
+- Land raw data into **Bronze Delta tables** using **Databricks Auto Loader** (`cloudFiles` format)
+- Auto Loader provides scalable, incremental file ingestion with automatic schema inference
+- **Schema management:** `cloudFiles.schemaLocation` tracks schema changes; `cloudFiles.schemaEvolutionMode` handles schema evolution automatically
+- **Incremental processing:** `Trigger.AvailableNow()` enables efficient batch-like processing of only new files since the last run
 - Partition by year/month for scalable reads and incremental refreshes
 
 **Outputs (example tables)**
