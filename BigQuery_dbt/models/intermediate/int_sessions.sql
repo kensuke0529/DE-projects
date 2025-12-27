@@ -13,6 +13,9 @@ with events as (
     e.event_date,
     e.event_ts,
     e.event_name,
+    e.operating_system,
+    e.browser,
+    e.device_category,
     e.platform,
     e.device,
     e.geo,
@@ -47,6 +50,9 @@ session_aggregates as (
     max(ga_session_number) as session_number,
     
     -- Platform & Device (first touch)
+    array_agg(operating_system order by event_ts limit 1)[safe_offset(0)] as operating_system,
+    array_agg(browser order by event_ts limit 1)[safe_offset(0)] as browser,
+    array_agg(device_category order by event_ts limit 1)[safe_offset(0)] as device_category,
     array_agg(platform order by event_ts limit 1)[safe_offset(0)] as platform,
     array_agg(device order by event_ts limit 1)[safe_offset(0)] as device,
     array_agg(geo order by event_ts limit 1)[safe_offset(0)] as geo,

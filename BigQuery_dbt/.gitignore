@@ -3,6 +3,7 @@ target/
 dbt_packages/
 logs/
 *.log
+.user.yml
 
 # Python
 __pycache__/
@@ -25,9 +26,8 @@ ENV/
 
 # Credentials
 *.json
-!profiles.yml
 profiles.yml
+check_purchase_events.sql
 
 # OS
-.DS_Store
 Thumbs.db

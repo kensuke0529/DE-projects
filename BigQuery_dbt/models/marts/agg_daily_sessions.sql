@@ -13,6 +13,9 @@ daily_metrics as (
   select
     session_date,
     platform,
+    operating_system,
+    browser,
+    device_category,
     
     -- Session counts
     count(*) as total_sessions,
@@ -48,7 +51,7 @@ daily_metrics as (
     safe_divide(sum(session_revenue), count(*)) as revenue_per_session
 
   from sessions
-  group by session_date, platform
+  group by session_date, platform, operating_system, browser, device_category
 )
 
 select
@@ -56,4 +59,4 @@ select
   -- User engagement ratio
   safe_divide(returning_user_sessions, new_user_sessions) as returning_to_new_ratio
 from daily_metrics
-order by session_date desc, platform
+order by session_date desc, platform, operating_system, browser

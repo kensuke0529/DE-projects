@@ -8,6 +8,7 @@ with purchase_items as (
     item_brand,
     item_category
   from {{ ref('int_purchase_items') }}
+  where has_items  -- Only include records with valid product data
 )
 
 select distinct

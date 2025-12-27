@@ -33,7 +33,14 @@ renamed as (
     user_pseudo_id,
     event_name,
     platform,
-    device,
+    
+    -- Flatten device struct for easier analysis
+    device.operating_system as operating_system,
+    device.web_info.browser as browser,
+    device.category as device_category,
+    device.mobile_brand_name as mobile_brand,
+    device,  -- Keep original struct for other fields if needed
+    
     geo,
     traffic_source,
     event_params,

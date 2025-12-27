@@ -1,15 +1,12 @@
 # dbt Core + BigQuery: GA4 E-commerce Analytics Pipeline
 
-A complete data transformation pipeline built with **dbt Core** and **Google BigQuery**, transforming raw Google Analytics 4 (GA4) e-commerce data into analytics-ready models.
-
 ## Project Overview
 
-This project demonstrates a production-ready dbt data pipeline that transforms the [Google Analytics 4 sample e-commerce dataset](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset) into clean, structured data models for business analytics.
+This project is a production-ready dbt data pipeline that transforms the [Google Analytics 4 sample e-commerce dataset](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset) into structured data models for business analytics.
 
-The pipeline follows the **medallion architecture** with clear separation between staging, intermediate, and mart layers—making it easy to maintain, test, and extend.
+This pipeline is designed for e-commerce teams using GA4 who struggle with complicated funnel metrics, conversion drop-offs, and revenue reporting. It transforms raw GA4 events into cleaned tables for analysis.
 
----
-
+![alt text](images/flow.png)
 ## Data Source
 
 **Source**: `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
@@ -24,80 +21,9 @@ This public dataset contains GA4 event data from a real e-commerce website, incl
 
 ---
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         BigQuery Public Data                        │
-│                    ga4_obfuscated_sample_ecommerce                  │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                        STAGING LAYER (Views)                        │
-├─────────────────┬──────────────────┬───────────────┬────────────────┤
-│   stg_events    │  stg_event_params │   stg_items   │ stg_event_     │
-│                 │                   │               │ param_pivot    │
-└────────┬────────┴────────┬─────────┴───────┬───────┴────────────────┘
-         │                 │                 │
-         ▼                 ▼                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                     INTERMEDIATE LAYER (Views)                      │
-├─────────────────────────┬─────────────────────┬─────────────────────┤
-│      int_sessions       │   int_purchase_items │    int_page_views   │
-│  (session aggregates)   │  (transaction line   │  (page view details)│
-│                         │       items)         │                     │
-└────────────┬────────────┴──────────┬──────────┴─────────────────────┘
-             │                       │
-             ▼                       ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                        MARTS LAYER (Tables)                         │
-├────────────────┬──────────────┬──────────────────┬──────────────────┤
-│agg_daily_      │fct_purchases │   dim_products   │    dim_views     │
-│sessions        │              │                  │                  │
-├────────────────┴──────────────┴──────────────────┴──────────────────┤
-│       agg_daily_product_revenue       │    agg_daily_funnel_long   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Model Layers
-
-### Staging Layer
-Lightweight views that clean — standardize raw GA4 data:
-
-| Model | Description |
-|-------|-------------|
-| `stg_events` | Core event data with parsed dates, timestamps, and unique event IDs |
-| `stg_event_params` | Flattened event parameters from nested arrays |
-| `stg_items` | Product/item data extracted from purchase events |
-| `stg_event_param_pivot` | Pivoted parameters with ga_session_id, page_location, transaction_id, etc. |
-
-### Intermediate Layer
-Business logic transformations that join — aggregate staging models:
-
-| Model | Description |
-|-------|-------------|
-| `int_sessions` | Session-level aggregates with engagement metrics, conversion flags, and revenue |
-| `int_purchase_items` | Transaction line items with product details and calculated revenue |
-| `int_page_views` | Page view events enriched with session context |
-
-### Marts Layer
-Analytics-ready tables optimized for reporting — dashboards:
-
-| Model | Description |
-|-------|-------------|
-| `fct_purchases` | Transaction-level fact table with item counts and revenue |
-| `dim_products` | Product dimension with unique products from the catalog |
-| `dim_views` | Daily page view aggregates with unique user counts |
-| `agg_daily_sessions` | Daily session metrics including conversion rates, bounce rates, and revenue |
-| `agg_daily_product_revenue` | Daily product performance with revenue aggregation |
-| `agg_daily_funnel_long` | Funnel analysis in long format: product views — add to cart — checkout — purchase |
-
----
-
 ## Key Analytics Features
+
+Since this dataset is obfuscated for privacy (anonymized user and product identifiers), the analysis is based on aggregated metrics and does not include individual user or product details and the filtered records are not included in the analysis.
 
 ### Session Analytics (`agg_daily_sessions`)
 - **User Engagement**: Session duration, pages per session, bounce rate
@@ -110,7 +36,79 @@ Analytics-ready tables optimized for reporting — dashboards:
 - **Product Performance**: Daily revenue by product
 - **User Behavior**: Session-level engagement and conversion tracking
 
----
+## Live Dashboard
+
+Explore the analytics visually with the **Looker Studio Dashboard**:
+
+**[View Dashboard](https://lookerstudio.google.com/reporting/ff72ef08-e8a3-4938-872f-98c45a86ab26)**
+
+![Looker Studio Dashboard](images/dashboard.png)
+
+This dashboard connects to the BigQuery marts layer and shows:
+- Daily session and conversion metrics
+- Product performance analytics
+- E-commerce funnel visualization
+- Revenue trends and insights
+
+
+## Sample Insights
+
+### High-Value iOS Traffic
+Recent analysis shows that **iOS users** demonstrate the highest conversion rate (**1.38%**), outperforming Web (1.35%) and Android (1.33%). This suggests a highly engaged mobile user base on Apple devices.
+
+## Business Questions Answered
+1. Where do users drop off the most in the purchase funnel?
+- The largest drop-off happened at the Add to Cart stage, where only -19.6% of users who viewed a product added it to the cart. Over 80% of users who viewed a product never added it to the cart.
+
+2. How efficient is the checkout process?
+- -47.5% of users proceed from Add to Cart to Checkout.
+
+3. Which product categories generate the most revenue per transaction?
+- Gift Cards has highest revenue per transaction with an average of $309 per transaction.
+- Second highest revenue per transaction is Black Lives Matter items at $58,
+
+4. When is the best sales days?
+- The highest daily sales is 2020-11-30 ($12,009), followed by 2020-12-16 ($11,491) and 2020-12-10 ($10,773).
+- These days are likely related to Black Friday/Cyber Monday  also Christmas sales events since 2020-12-24/25 are the lowest sales days.
+
+5. Which browser drives the most sessions?
+- Chrome is the primary driver of traffic (84%) and conversion impact, while Safari is around 16%, a smaller but still significant segment.
+
+
+## Model Layers
+
+### Staging Layer
+Lightweight views that clean:
+
+| Model | Description |
+|-------|-------------|
+| `stg_events` | Core event data with parsed dates, timestamps, and unique event IDs |
+| `stg_event_params` | Flattened event parameters from nested arrays |
+| `stg_items` | Product/item data extracted from purchase events |
+| `stg_event_param_pivot` | Pivoted parameters with ga_session_id, page_location, transaction_id, etc. |
+
+### Intermediate Layer
+Business logic transformations that join:
+
+| Model | Description |
+|-------|-------------|
+| `int_sessions` | Session-level aggregates with engagement metrics, conversion flags, and revenue |
+| `int_purchase_items` | Transaction line items with product details and calculated revenue |
+| `int_page_views` | Page view events enriched with session context |
+
+### Marts Layer
+Analytics-ready tables optimized for reporting:
+
+| Model | Description |
+|-------|-------------|
+| `fct_purchases` | Transaction-level fact table with item counts and revenue |
+| `dim_products` | Product dimension with unique products from the catalog |
+| `dim_views` | Daily page view aggregates with unique user counts |
+| `agg_daily_sessions` | Daily session metrics including conversion rates, bounce rates, and revenue |
+| `agg_daily_product_revenue` | Daily product performance with revenue aggregation |
+| `agg_daily_funnel_long` | Funnel analysis in long format: product views — add to cart — checkout — purchase |
+
+
 
 ## Data Quality
 
@@ -120,33 +118,8 @@ All models include schema tests defined in `schema.yml` files:
 - **Required Fields**: Not-null tests on critical columns
 - **Referential Integrity**: Relationship tests between models
 
----
-
-## Technical Highlights
-
-- **Wildcard Table Handling**: Uses `_TABLE_SUFFIX` to efficiently query date-sharded GA4 tables
-- **Configurable Date Range**: Date range controlled via dbt variables (`ga4_start_suffix`, `ga4_end_suffix`)
-- **Event ID Generation**: SHA256 hash creates unique event identifiers
-- **Nested Data Handling**: Proper unnesting of GA4's nested event_params and items arrays
-- **Materialization Strategy**: Views for staging/intermediate (cost-efficient), tables for marts (query performance)
-
----
-
-## Project Structure
-
-```
-BigQuery_dbt/
-├── models/
-│   ├── source/           # Source definitions (GA4 public dataset)
-│   ├── staging/          # Data cleaning — standardization
-│   ├── intermediate/     # Business logic — aggregations
-│   └── marts/            # Analytics-ready output tables
-├── macros/               # Custom Jinja macros
-├── dbt_project.yml       # Project configuration
-└── packages.yml          # dbt package dependencies
-```
-
----
+### Filtered Data Monitoring
+Analysis reveals that **~11% of purchase records** were filtered due to incomplete data, primarily caused by a tracking misconfiguration. This pipeline automatically filters these incomplete records in the marts layer to ensure analytical accuracy.
 
 ## Documentation
 
@@ -155,23 +128,6 @@ This project includes auto-generated dbt documentation with:
 - Column descriptions and data types
 - Test coverage and data quality rules
 
-Generate and view documentation locally with:
-```bash
-dbt docs generate && dbt docs serve
-```
+![image](images/graph.png)
 
----
 
-## Live Dashboard
-
-Explore the analytics visually with the **Looker Studio Dashboard**:
-
-**[View Dashboard](https://lookerstudio.google.com/reporting/ff72ef08-e8a3-4938-872f-98c45a86ab26)**
-
-![Looker Studio Dashboard](images/dashboard.png)
-
-This interactive dashboard connects directly to the BigQuery marts layer and provides:
-- Daily session and conversion metrics
-- Product performance analytics
-- E-commerce funnel visualization
-- Revenue trends and insights

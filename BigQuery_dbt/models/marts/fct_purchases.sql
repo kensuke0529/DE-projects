@@ -11,6 +11,7 @@ with purchase_items as (
     quantity,
     item_revenue
   from {{ ref('int_purchase_items') }}
+  where is_complete  -- Only include analytics-ready records
 )
 
 select

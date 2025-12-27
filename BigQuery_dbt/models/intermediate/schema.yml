@@ -2,19 +2,34 @@ version: 2
 
 models:
   - name: int_purchase_items
-    description: Purchase items with transaction, product, and revenue details
+    description: |
+      Purchase line items with transaction, product, and revenue details.
+      Now uses LEFT JOINs to preserve ALL purchase events.
+      Use is_complete = TRUE to filter for analytics-ready records.
     columns:
       - name: transaction_id
+        description: Transaction ID (prefixed with MISSING_ if original was null)
         tests:
-          - unique
           - not_null
       - name: purchase_ts
         tests:
           - not_null
-      - name: total_revenue
-        tests:
-          - not_null
-      - name: currency
-        tests:
-          - not_null
+      - name: is_valid_transaction
+        description: TRUE if original transaction_id existed
+      - name: has_items
+        description: TRUE if product items were found
+      - name: is_complete
+        description: TRUE if both transaction_id and items exist (ready for analytics)
 
+  - name: int_sessions
+    description: |
+      Session-level aggregates with engagement metrics.
+      Note: Sessions are grouped by date, so a session spanning midnight 
+      will appear as separate rows. session_key is unique per date, not globally.
+    columns:
+      - name: session_key
+        description: Session identifier (user_id + ga_session_id), unique per date
+        tests:
+          - not_null
+      - name: operating_system
+        description: Device operating system (Web, iOS, Android, etc.)

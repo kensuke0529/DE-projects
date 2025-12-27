@@ -12,6 +12,7 @@ with purchase_items as (
     item_revenue,
     unit_price
   from {{ ref('int_purchase_items') }}
+  where is_complete  -- Only include analytics-ready records
 )
 
 select

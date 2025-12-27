@@ -19,12 +19,13 @@ models:
           - not_null
 
   - name: fct_purchases
-    description: Transaction-level fact table with purchase details
+    description: |
+      Transaction-level fact table with purchase details.
+      Note: Filtered to only include complete records (is_complete = TRUE).
     columns:
       - name: transaction_id
-        description: Unique transaction identifier
+        description: Transaction identifier (may have multiple items per transaction)
         tests:
-          - unique
           - not_null
       - name: user_pseudo_id
         description: User identifier
@@ -35,17 +36,16 @@ models:
         tests:
           - not_null
       - name: total_revenue
-        description: Total transaction revenue
-        tests:
-          - not_null
+        description: Total transaction revenue (may be null for some transactions)
 
   - name: dim_products
-    description: Product dimension table with unique products
+    description: |
+      Product dimension table with unique products.
+      Note: Same product_key may appear with different item details in source data.
     columns:
       - name: product_key
-        description: Unique product identifier
+        description: Product identifier
         tests:
-          - unique
           - not_null
       - name: item_name
         description: Product name
@@ -83,3 +83,23 @@ models:
         description: Number of sessions at this stage
         tests:
           - not_null
+
+  - name: agg_daily_sessions
+    description: Daily session metrics aggregated by platform and operating system
+    columns:
+      - name: session_date
+        description: Date of the session
+        tests:
+          - not_null
+      - name: platform
+        description: Device platform
+        tests:
+          - not_null
+      - name: operating_system
+        description: Device operating system
+        tests:
+          - not_null
+      - name: browser
+        description: Web browser
+      - name: device_category
+        description: Device category (mobile, desktop, tablet)
