@@ -1,10 +1,18 @@
 # dbt Core + BigQuery: GA4 E-commerce Analytics Pipeline
 
+<!-- [![dbt CI](https://github.com/kensuke0529/NEW-REPO-NAME/actions/workflows/dbt-ci.yml/badge.svg)](https://github.com/kensuke0529/NEW-REPO-NAME/actions/workflows/dbt-ci.yml) -->
+
+
 ## Project Overview
 
 This project is a production-ready dbt data pipeline that transforms the [Google Analytics 4 sample e-commerce dataset](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset) into structured data models for business analytics.
 
 This pipeline is designed for e-commerce teams using GA4 who struggle with complicated funnel metrics, conversion drop-offs, and revenue reporting. It transforms raw GA4 events into cleaned tables for analysis.
+
+- Stack: dbt Core + BigQuery + Looker Studio
+- Goal: Reliable GA4 funnel + revenue models for analytics
+- Outputs: session/day aggregates, funnel tables, product revenue marts
+- DQ: schema + relationship tests + filtered purchase anomaly handling (~11%)
 
 ![alt text](images/flow.png)
 ## Data Source
@@ -23,7 +31,7 @@ This public dataset contains GA4 event data from a real e-commerce website, incl
 
 ## Key Analytics Features
 
-Since this dataset is obfuscated for privacy (anonymized user and product identifiers), the analysis is based on aggregated metrics and does not include individual user or product details and the filtered records are not included in the analysis.
+Note: This public GA4 dataset is obfuscated for privacy (anonymized identifiers), but it preserves real event structure and session behavior
 
 ### Session Analytics (`agg_daily_sessions`)
 - **User Engagement**: Session duration, pages per session, bounce rate
