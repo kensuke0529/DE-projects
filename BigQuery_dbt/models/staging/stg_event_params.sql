@@ -30,8 +30,6 @@ exploded as (
     b.event_name,
 
     ep.key as param_key,
-
-    -- GA4 params have typed values; keep them all
     ep.value.string_value as string_value,
     ep.value.int_value    as int_value,
     ep.value.float_value  as float_value,

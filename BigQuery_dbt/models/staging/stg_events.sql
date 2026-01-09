@@ -39,8 +39,7 @@ renamed as (
     device.web_info.browser as browser,
     device.category as device_category,
     device.mobile_brand_name as mobile_brand,
-    device,  -- Keep original struct for other fields if needed
-    
+    device,  
     geo,
     traffic_source,
     event_params,
