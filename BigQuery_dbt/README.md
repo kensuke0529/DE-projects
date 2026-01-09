@@ -7,7 +7,10 @@
 
 This project is a production-ready dbt data pipeline that transforms the [Google Analytics 4 sample e-commerce dataset](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset) into structured data models for business analytics.
 
-This pipeline is designed for e-commerce teams using GA4 who struggle with complicated funnel metrics, conversion drop-offs, and revenue reporting. It transforms raw GA4 events into cleaned tables for analysis.
+Problem: Raw GA4 exports are nested, not BI-ready, and purchase data can be incomplete—causing inconsistent revenue and slow/expensive queries.
+
+Solution: A dbt pipeline that unnests GA4 events into relational models, standardizes funnel + revenue definitions, adds tests and anomaly handling, and publishes marts optimized for dashboards.
+
 
 - Stack: dbt Core + BigQuery + Looker Studio
 - Goal: Reliable GA4 funnel + revenue models for analytics
@@ -15,6 +18,21 @@ This pipeline is designed for e-commerce teams using GA4 who struggle with compl
 - DQ: schema + relationship tests + filtered purchase anomaly handling (~11%)
 
 ![alt text](images/flow.png)
+
+## Business Problem Statement
+GA4 BigQuery exports are powerful but not BI-ready because:
+- Nested / repeated fields (event_params, items) make basic SQL reporting slow and error-prone.
+- Sessions and funnel steps aren’t explicit—they have to be derived consistently.
+- Purchase / revenue fields can be incomplete, leading to inconsistent revenue and conversion metrics.
+- Raw event tables are expensive to query repeatedly for dashboards and recurring analysis.
+
+## What this pipeline solves
+This dbt pipeline converts raw GA4 events into tested, documented, analytics-ready models:
+- Flattens GA4 into relational tables that BI tools can query easily.
+- Standardizes definitions for sessions, funnel steps, purchases, and revenue
+- Adds data quality checks (uniqueness, not-null, relationships) and handles incomplete purchase events with documented filtering + monitoring.
+- Improves query cost + performance by creating curated marts (and optionally partitioning/clustering + incremental models), so dashboards don’t scan raw events every time.
+
 ## Data Source
 
 **Source**: `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
