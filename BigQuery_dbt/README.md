@@ -27,6 +27,16 @@ This public dataset contains GA4 event data from a real e-commerce website, incl
 
 **Date Range**: November 1, 2020 – January 31, 2021
 
+### Dataset Statistics
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| **Total Purchase Events** | 5,692 | 100% |
+| **Complete (Analytics-Ready)** | 4,786 | 84.1% |
+| **Incomplete (Filtered)** | 906 | 15.9% |
+
+The pipeline automatically filters **906 incomplete purchase records** (15.9%) that were missing `transaction_id` or product item details, primarily due to a GA4 tracking misconfiguration during initial setup in November 2020. This ensures all downstream analytics tables contain only complete, reliable data. See [`data_filtering_summary.md`](data_filtering_summary.md) for detailed analysis.
+
 ---
 
 ## Key Analytics Features
