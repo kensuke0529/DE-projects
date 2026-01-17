@@ -2,10 +2,9 @@ version: 2
 
 sources:
   - name: ga4
-    database: bigquery-public-data        # BigQuery project
-    schema: ga4_obfuscated_sample_ecommerce  # BigQuery dataset
+    database: bigquery-public-data       # BigQuery project
+    schema: ga4_obfuscated_sample_ecommerce         # BigQuery dataset
 
     tables:
-      - name: events                      # dbt logical name (no *)
-        identifier: events_*              # actual BigQuery wildcard tables
-        description: "GA4 obfuscated ecommerce sample export tables (events_YYYYMMDD)."
+      - name: events                    
+        identifier: events_*               

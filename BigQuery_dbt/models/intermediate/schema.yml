@@ -1,35 +1,125 @@
 version: 2
 
 models:
-  - name: int_purchase_items
-    description: |
-      Purchase line items with transaction, product, and revenue details.
-      Now uses LEFT JOINs to preserve ALL purchase events.
-      Use is_complete = TRUE to filter for analytics-ready records.
+  - name: int_event_param_pivot
+    description: "Pivoted event parameters - one row per event with commonly used GA4 parameters as columns."
     columns:
+      - name: event_key
+        description: "Unique event identifier (hash of user_pseudo_id, event_timestamp, event_name)."
+        tests:
+          - unique
+          - not_null
+      - name: event_date
+        description: "Event date."
+      - name: event_ts
+        description: "Event timestamp."
+      - name: user_pseudo_id
+        description: "User pseudo ID."
+      - name: ga_session_id
+        description: "Session ID from event parameters."
+      - name: ga_session_number
+        description: "Session number."
+      - name: page_location
+        description: "Full page URL."
+      - name: page_referrer
+        description: "Previous page URL."
       - name: transaction_id
-        description: Transaction ID (prefixed with MISSING_ if original was null)
-        tests:
-          - not_null
-      - name: purchase_ts
-        tests:
-          - not_null
-      - name: is_valid_transaction
-        description: TRUE if original transaction_id existed
-      - name: has_items
-        description: TRUE if product items were found
-      - name: is_complete
-        description: TRUE if both transaction_id and items exist (ready for analytics)
+        description: "Transaction ID if applicable."
+      - name: value_param
+        description: "Event value (e.g. revenue)."
+      - name: currency
+        description: "Currency code."
 
   - name: int_sessions
-    description: |
-      Session-level aggregates with engagement metrics.
-      Note: Sessions are grouped by date, so a session spanning midnight 
-      will appear as separate rows. session_key is unique per date, not globally.
+    description: "Session-level aggregated metrics."
     columns:
       - name: session_key
-        description: Session identifier (user_id + ga_session_id), unique per date
+        description: "Unique session key (user_pseudo_id + session_id)."
+        tests:
+          - unique
+          - not_null
+      - name: user_pseudo_id
+        description: "User pseudo ID."
+      - name: ga_session_id
+        description: "GA Session ID."
+      - name: session_date
+        description: "Date of the session."
+      - name: session_start_ts
+        description: "Timestamp of first event in session."
+      - name: session_end_ts
+        description: "Timestamp of last event in session."
+      - name: session_duration_seconds
+        description: "Total duration of session in seconds."
+      - name: total_events
+        description: "Count of all events in session."
+      - name: page_views
+        description: "Count of page_view events."
+      - name: session_revenue
+        description: "Total revenue from purchase events in this session."
+      - name: is_converted
+        description: "Boolean flag indicating if a purchase occurred."
+
+  - name: int_purchase_items
+    description: "Line-item level purchase data with product details."
+    columns:
+      - name: event_key
+        description: "Foreign key to events table."
+      - name: transaction_id
+        description: "Transaction ID (can be null for ghost orders)."
+      - name: item_id
+        description: "Product Item ID."
+      - name: item_name
+        description: "Product Name."
+      - name: quantity
+        description: "Quantity purchased."
+      - name: item_revenue_calc
+        description: "Calculated item revenue (price * quantity)."
+      - name: is_valid_purchase_line
+        description: "Boolean flag for valid purchase line items."
+
+  - name: int_users
+    description: "User-level aggregated metrics from events."
+    columns:
+      - name: user_pseudo_id
+        description: "Unique user identifier."
+        tests:
+          - unique
+          - not_null
+      - name: first_seen_date
+        description: "First date user appeared."
+      - name: last_seen_date
+        description: "Most recent date user appeared."
+      - name: days_active
+        description: "Number of distinct days user was active."
+      - name: total_events
+        description: "Total count of events for this user."
+
+  - name: int_geo
+    description: "Geographic attributes per event."
+    columns:
+      - name: event_key
+        description: "Foreign key to events."
         tests:
           - not_null
+      - name: country
+        description: "Country from GA4 geo data."
+      - name: region
+        description: "Region/state from GA4 geo data."
+      - name: city
+        description: "City from GA4 geo data."
+
+  - name: int_platform
+    description: "Device and platform attributes per event."
+    columns:
+      - name: event_key
+        description: "Foreign key to events."
+        tests:
+          - not_null
+      - name: platform
+        description: "Platform type (web, iOS, Android)."
+      - name: device_category
+        description: "Device category (desktop, mobile, tablet)."
       - name: operating_system
-        description: Device operating system (Web, iOS, Android, etc.)
+        description: "Operating system name."
+      - name: browser
+        description: "Browser name."

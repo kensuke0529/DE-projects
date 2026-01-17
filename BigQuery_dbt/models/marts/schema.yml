@@ -1,105 +1,148 @@
 version: 2
 
 models:
-  - name: dim_views
-    description: Page views by day
+  - name: fct_events
+    description: "Base fact table containing all GA4 events with event-level grain."
     columns:
-      - name: event_date
-        description: Date of the event
+      - name: event_key
+        description: "Unique identifier for each event."
         tests:
           - unique
           - not_null
-      - name: total_page_views
-        description: Total number of page views
-        tests:
-          - not_null
-      - name: unique_users
-        description: Number of unique users
-        tests:
-          - not_null
+      - name: event_date
+        description: "Date of the event."
+      - name: event_ts
+        description: "Timestamp of the event."
+      - name: user_pseudo_id
+        description: "User identifier."
+      - name: event_name
+        description: "Name of the event (e.g., page_view, purchase, add_to_cart)."
+      - name: ga_session_id
+        description: "Session ID from GA4."
+      - name: transaction_id
+        description: "Transaction ID if applicable."
+      - name: event_value
+        description: "Event value (e.g., revenue)."
+      - name: currency
+        description: "Currency code."
+      - name: page_location
+        description: "Full page URL."
+      - name: page_title
+        description: "Page title."
 
   - name: fct_purchases
-    description: |
-      Transaction-level fact table with purchase details.
-      Note: Filtered to only include complete records (is_complete = TRUE).
+    description: "Transaction-level fact table containing purchase metrics and item counts."
     columns:
       - name: transaction_id
-        description: Transaction identifier (may have multiple items per transaction)
-        tests:
-          - not_null
+        description: "Unique identifier for the transaction (generated if missing)."
       - name: user_pseudo_id
-        description: User identifier
-        tests:
-          - not_null
-      - name: purchase_ts
-        description: Purchase timestamp
-        tests:
-          - not_null
-      - name: total_revenue
-        description: Total transaction revenue (may be null for some transactions)
-
-  - name: dim_products
-    description: |
-      Product dimension table with unique products.
-      Note: Same product_key may appear with different item details in source data.
-    columns:
-      - name: product_key
-        description: Product identifier
-        tests:
-          - not_null
-      - name: item_name
-        description: Product name
-
-  - name: agg_daily_product_revenue
-    description: Daily product performance metrics
-    columns:
+        description: "User identifier."
       - name: event_date
-        description: Date of the event
-        tests:
-          - not_null
-      - name: product_key
-        description: Product identifier
-        tests:
-          - not_null
+        description: "Date of the purchase event."
+      - name: purchase_ts
+        description: "Timestamp of the purchase."
+      - name: currency
+        description: "Currency code of the transaction."
       - name: total_revenue
-        description: Total revenue for the product on this day
+        description: "Total revenue for the transaction."
+      - name: items_count
+        description: "Number of unique line items (SKUs) in the transaction."
+      - name: total_quantity
+        description: "Total quantity of all items purchased."
 
-  - name: agg_daily_funnel_long
-    description: Long-format funnel metrics for visualization
+  - name: fct_sessions
+    description: "Session-level fact table with session metrics and filters."
     columns:
-      - name: session_date
-        description: Date of the session
-        tests:
-          - not_null
-      - name: stage_order
-        description: The numeric order of the funnel stage
-        tests:
-          - not_null
-      - name: stage
-        description: The name of the funnel stage
-        tests:
-          - not_null
-      - name: sessions
-        description: Number of sessions at this stage
-        tests:
-          - not_null
+      - name: user_pseudo_id
+        description: "User identifier."
+      - name: event_date
+        description: "Date of the session."
+      - name: session_start
+        description: "Timestamp of session start."
+      - name: session_end
+        description: "Timestamp of session end."
+      - name: session_length
+        description: "Session duration in seconds."
+      - name: session_number
+        description: "Sequential session number for the user."
+      - name: session_id
+        description: "GA4 session ID."
 
-  - name: agg_daily_sessions
-    description: Daily session metrics aggregated by platform and operating system
+  - name: dim_users
+    description: "User dimension table with user-level attributes and metrics."
     columns:
-      - name: session_date
-        description: Date of the session
+      - name: user_pseudo_id
+        description: "Unique user identifier."
         tests:
+          - unique
           - not_null
+      - name: first_seen_date
+        description: "Date when user was first seen."
+      - name: last_seen_date
+        description: "Date when user was last seen."
+      - name: days_active
+        description: "Number of distinct days user was active."
+      - name: total_events
+        description: "Total number of events for this user."
+
+  - name: dim_geo
+    description: "Geographic dimension table with location attributes."
+    columns:
+      - name: event_key
+        description: "Foreign key to events."
+      - name: country
+        description: "Country from geo data."
+      - name: region
+        description: "Region/state from geo data."
+      - name: city
+        description: "City from geo data."
+      - name: total_transactions
+        description: "Total number of transactions in this session."
+      - name: total_revenue
+        description: "Total revenue generated in this session."
+      - name: has_transaction
+        description: "Boolean (1/0) indicating if the session resulted in a transaction. Useful for calculating conversion rate (AVG)."
+
+  - name: rpt_product_sales
+    description: "Item-level reporting table for product and category analysis. One row per item sold."
+    columns:
+      - name: item_name
+        description: "Name of the product/item."
+      - name: item_category
+        description: "Category of the product/item."
+      - name: item_revenue
+        description: "Revenue allocated to this specific item (price * quantity)."
+      - name: quantity
+        description: "Quantity of this item purchased."
+      - name: country
+        description: "Country of the purchaser (from session)."
+
+  - name: dim_platform
+    description: "Platform/device dimension table with technical attributes."
+    columns:
+      - name: event_key
+        description: "Foreign key to events."
       - name: platform
-        description: Device platform
-        tests:
-          - not_null
-      - name: operating_system
-        description: Device operating system
-        tests:
-          - not_null
-      - name: browser
-        description: Web browser
+        description: "Platform (web, iOS, Android)."
       - name: device_category
-        description: Device category (mobile, desktop, tablet)
+        description: "Device category (desktop, mobile, tablet)."
+      - name: operating_system
+        description: "Operating system."
+      - name: browser
+        description: "Browser name."
+
+  - name: dim_items
+    description: "Item/product dimension table."
+    columns:
+      - name: transaction_id
+        description: "Transaction ID."
+      - name: item_id
+        description: "Product item ID."
+      - name: item_name
+        description: "Product name."
+      - name: item_brand
+        description: "Product brand."
+      - name: item_category
+        description: "Product category."
+      - name: price
+        description: "Item price."

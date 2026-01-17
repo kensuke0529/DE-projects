@@ -1,50 +1,46 @@
 {{ config(materialized='view') }}
 
-{% set start_suffix = var('ga4_start_suffix', '20201101') %}
-{% set end_suffix   = var('ga4_end_suffix',   '20201107') %}
+{% set start_date = var('start_date', none) %}
+{% set end_date   = var('end_date', none) %}
 
 with base as (
   select
-    event_date,
-    event_timestamp,
-    event_name,
-    user_pseudo_id,
-    platform,
-    device,
-    geo,
-    traffic_source,
-    event_params,
-    items
-  from {{ source('ga4','events') }}
-  where _TABLE_SUFFIX between '{{ start_suffix }}' and '{{ end_suffix }}'
-),
-
-renamed as (
-  select
-    to_hex(sha256(concat(
-      user_pseudo_id, '|',
-      cast(event_timestamp as string), '|',
-      event_name
-    ))) as event_id,
-
     parse_date('%Y%m%d', event_date) as event_date,
     timestamp_micros(event_timestamp) as event_ts,
 
     user_pseudo_id,
     event_name,
     platform,
-    
-    -- Flatten device struct for easier analysis
+
+    device.category as device_category,
     device.operating_system as operating_system,
     device.web_info.browser as browser,
-    device.category as device_category,
-    device.mobile_brand_name as mobile_brand,
-    device,  
-    geo,
-    traffic_source,
+
+    geo.country as country,
+    geo.region as region,
+    geo.city as city,
+
     event_params,
-    items
+    items,
+    event_bundle_sequence_id
+
+  from {{ source('ga4','events') }}
+
+  {% if start_date and end_date %}
+  where event_date between '{{ start_date }}' and '{{ end_date }}'
+  {% endif %}
+),
+
+final as (
+  select
+    *,
+    to_hex(sha256(concat(
+      user_pseudo_id, '|',
+      cast(event_ts as string), '|',
+      event_name, '|',
+      cast(coalesce(event_bundle_sequence_id, 0) as string)
+    ))) as event_key
   from base
 )
 
-select * from renamed
+select * from final

@@ -38,6 +38,10 @@ models:
       +materialized: table
       +schema: marts
 
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+
 # Date range for GA4 public dataset (Nov 1, 2020 - Jan 31, 2021)
 vars:
   ga4_start_suffix: '20201101'  # First available date
