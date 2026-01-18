@@ -1,8 +1,21 @@
 {{ config(materialized='view') }}
 
+/*
+  Purchase Line Items Model
+  
+  Uses LEFT JOINs to preserve ALL purchase events, even those missing:
+  - transaction_id (906 events / 15.9% of purchases)
+  - product items (2 events)
+  
+  Data Quality Flags:
+  - is_valid_transaction: TRUE if transaction_id exists
+  - has_items: TRUE if product details exist
+  - is_complete: TRUE if both conditions met (ready for analytics)
+*/
+
 with purchase_events as (
   select 
-    event_key,
+    event_id,
     user_pseudo_id,
     event_date,
     event_ts
@@ -12,77 +25,55 @@ with purchase_events as (
 
 params as (
   select
-    event_key,
+    event_id,
     transaction_id,
-    value_param as event_value, 
-    currency,
-    ga_session_id                 
-  from {{ ref('int_event_param_pivot') }}
+    value as total_revenue,
+    currency
+  from {{ ref('stg_event_param_pivot') }}
 ),
 
 items as (
   select
-    event_key,
-    item_id,
+    event_id,
+    coalesce(item_id, item_name) as product_key,
     item_name,
+    item_id,
     item_brand,
     item_category,
     quantity,
     price,
-    item_revenue as ga4_item_revenue
+    price * quantity as item_revenue
   from {{ ref('stg_items') }}
-),
-
-joined as (
-  select
-    e.event_key as purchase_event_key,
-    e.user_pseudo_id,
-    e.event_date,
-    e.event_ts as purchase_ts,
-
-    p.ga_session_id,
-    p.transaction_id,
-    p.currency,
-    p.event_value,
-
-    i.item_id,
-    i.item_name,
-    i.item_brand,
-    i.item_category,
-    i.quantity,
-    i.price,
-
-    coalesce(i.ga4_item_revenue, i.price * i.quantity) as item_revenue_calc
-  from purchase_events e
-  left join params p using (event_key)
-  left join items i using (event_key)
-),
-
-final as (
-  select
-    *,
-
-    -- DQ flags
-    transaction_id is not null as has_transaction_id,
-    item_id is not null or item_name is not null as has_item,
-
-    (
-      transaction_id is not null
-      and (item_id is not null or item_name is not null)
-      and quantity is not null and quantity > 0
-      and item_revenue_calc is not null and item_revenue_calc >= 0
-    ) as is_valid_purchase_line,
-
-    case
-      when transaction_id is null then 'missing_transaction_id'
-      when (item_id is null and item_name is null) then 'missing_item'
-      when quantity is null then 'missing_quantity'
-      when quantity <= 0 then 'nonpositive_quantity'
-      when item_revenue_calc is null then 'missing_item_revenue'
-      when item_revenue_calc < 0 then 'negative_item_revenue'
-      else null
-    end as invalid_reason
-  from joined
 )
 
-select * from final
+select
+  -- Transaction info
+  coalesce(p.transaction_id, concat('MISSING_', e.event_id)) as transaction_id,
+  e.user_pseudo_id,
+  e.event_date,
+  e.event_ts as purchase_ts,
+  
+  -- Financial
+  p.total_revenue,
+  p.currency,
+  
+  -- Product info
+  i.product_key,
+  i.item_id,
+  i.item_name,
+  i.item_brand,
+  i.item_category,
+  
+  -- Metrics
+  coalesce(i.quantity, 0) as quantity,
+  i.price as unit_price,
+  coalesce(i.item_revenue, 0) as item_revenue,
+  
+  -- Data Quality Flags
+  p.transaction_id is not null as is_valid_transaction,
+  i.product_key is not null as has_items,
+  (p.transaction_id is not null and i.product_key is not null) as is_complete
+  
+from purchase_events e
+left join params p using (event_id)
+left join items i using (event_id)
