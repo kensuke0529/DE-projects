@@ -44,6 +44,7 @@ This document provides a technical breakdown of the dbt models used in our E-com
 | :--- | :--- | :--- |
 | **`rpt_sessions_wide`** | **The Boardroom Table**. Joins Sessions + Geo + Transaction totals. | Powers the main Dashboard filters (Region, Traffic Source) and Conversion Rates. |
 | **`rpt_product_sales`** | **The Merch Table**. Joins Sales Items + Session Context. | Powers "Top Selling Products" and "Revenue by Category" charts. |
+| **`rpt_funnel_sessions`** | **The Funnel Table**. Session-level funnel progression with stage flags and drop-off analysis. | Powers funnel visualization, conversion optimization, and drop-off analysis dashboards. |
 
 ---
 

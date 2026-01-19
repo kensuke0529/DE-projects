@@ -33,6 +33,11 @@ models:
       +materialized: view
       +schema: staging
     
+    # Config for intermediate models
+    intermediate:
+      +materialized: view
+      +schema: staging  # Same schema as staging for easier querying
+    
     # Config for models in the marts folder
     marts:
       +materialized: table
